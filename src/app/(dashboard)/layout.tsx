@@ -1,6 +1,8 @@
+// src/app/(dashboard)/layout.tsx
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { DashboardNav } from "@/features/dashboard/components/dashboard-nav";
+import { MobileBottomNav } from "@/features/dashboard/components/mobile-bottom-nav";
+import { MobileHeader } from "@/features/dashboard/components/mobile-header";
 
 export default async function DashboardLayout({
   children,
@@ -14,11 +16,15 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <DashboardNav />
-      <main className="lg:pl-72">
-        <div className="px-4 sm:px-6 lg:px-8 py-8">{children}</div>
-      </main>
+    <div className="min-h-screen bg-background pb-20">
+      {/* Mobile Header */}
+      <MobileHeader />
+
+      {/* Main Content */}
+      <main className="py-6">{children}</main>
+
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav />
     </div>
   );
 }

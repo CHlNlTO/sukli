@@ -29,7 +29,9 @@ function validateParsedData(data: any): boolean {
     data.currency.length === 3 &&
     typeof data.confidence_score === "number" &&
     data.confidence_score >= 0 &&
-    data.confidence_score <= 1
+    data.confidence_score <= 1 &&
+    (!data.transaction_type ||
+      ["income", "expense"].includes(data.transaction_type))
   );
 }
 
@@ -120,6 +122,7 @@ Analyze the image and return ONLY a valid JSON object with the following exact s
 {
   "amount": 0.00,
   "currency": "PHP",
+  "transaction_type": "expense",
   "merchant_name": "Store Name",
   "category": "Category",
   "transaction_date": "2025-01-19",
@@ -133,10 +136,13 @@ CRITICAL RULES:
 - Extract the TOTAL amount paid, not individual items
 - Use Philippine Peso (PHP) as default currency unless clearly stated otherwise
 - Date format must be YYYY-MM-DD
+- transaction_type should be "expense" for receipts (money spent) or "income" for income receipts (rare)
 - Confidence score: 0.0 to 1.0 based on image clarity and data extraction certainty
-- Categories: Food, Transportation, Shopping, Utilities, Entertainment, Healthcare, etc.
+- Categories for expenses: Food, Transportation, Shopping, Utilities, Entertainment, Healthcare, etc.
+- Categories for income: Salary, Freelance, Investment, Business, Gift, Refund, etc.
 - If any field is unclear, make a reasonable guess but lower the confidence score
 - If the image is completely unreadable, set confidence_score to 0.1
+- Most receipts are expenses unless clearly showing income (salary slips, payment confirmations, etc.)
 ${customPrompt}`;
 
     const activeGenAI = useCustomApiKey && customGenAI ? customGenAI : genAI;
@@ -173,6 +179,7 @@ ${customPrompt}`;
       return NextResponse.json({
         amount: 0,
         currency: "PHP",
+        transaction_type: "expense",
         merchant_name: "Unknown",
         category: "Other",
         transaction_date: new Date().toISOString().split("T")[0],
@@ -190,6 +197,11 @@ ${customPrompt}`;
         amount: typeof parsedData.amount === "number" ? parsedData.amount : 0,
         currency:
           typeof parsedData.currency === "string" ? parsedData.currency : "PHP",
+        transaction_type:
+          parsedData.transaction_type &&
+          ["income", "expense"].includes(parsedData.transaction_type)
+            ? parsedData.transaction_type
+            : "expense",
         merchant_name:
           typeof parsedData.merchant_name === "string"
             ? parsedData.merchant_name
@@ -213,6 +225,11 @@ ${customPrompt}`;
       };
 
       return NextResponse.json(fixedData);
+    }
+
+    // Ensure transaction_type is set correctly if not provided
+    if (!parsedData.transaction_type) {
+      parsedData.transaction_type = "expense"; // Default to expense for most receipts
     }
 
     console.log("Successfully parsed receipt data:", parsedData);

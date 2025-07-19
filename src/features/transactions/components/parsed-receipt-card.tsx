@@ -1,3 +1,4 @@
+// src/features/transactions/components/parsed-receipt-card.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -11,12 +12,13 @@ import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { Textarea } from "@/shared/components/ui/textarea";
-import { UploadedImage } from "@/types/database";
-import { Check, X, Loader2 } from "lucide-react";
+import { UploadedImage, TransactionType } from "@/types/database";
+import { Check, X, Loader2, Plus, Minus } from "lucide-react";
 import Image from "next/image";
 import { ImageZoom } from "@/components/ui/kibo-ui/image-zoom";
 import { Spinner } from "@/components/ui/kibo-ui/spinner";
 import { Status, StatusIndicator } from "@/components/ui/kibo-ui/status";
+import { cn } from "@/lib/utils";
 
 interface ParsedReceiptCardProps {
   image: UploadedImage;
@@ -34,6 +36,7 @@ export function ParsedReceiptCard({
   const [formData, setFormData] = useState({
     amount: "",
     currency: "PHP",
+    transaction_type: "expense" as TransactionType,
     merchant_name: "",
     category: "",
     transaction_date: new Date().toISOString().split("T")[0],
@@ -48,6 +51,7 @@ export function ParsedReceiptCard({
       setFormData({
         amount: image.parsed_data.amount?.toString() || "",
         currency: image.parsed_data.currency || "PHP",
+        transaction_type: image.parsed_data.transaction_type || "expense",
         merchant_name: image.parsed_data.merchant_name || "",
         category: image.parsed_data.category || "",
         transaction_date:
@@ -69,6 +73,14 @@ export function ParsedReceiptCard({
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleTypeChange = (type: TransactionType) => {
+    setFormData((prev) => ({
+      ...prev,
+      transaction_type: type,
+      category: "", // Reset category when type changes
+    }));
   };
 
   const getStatusBadge = () => {
@@ -152,6 +164,39 @@ export function ParsedReceiptCard({
         {image.status === "completed" && image.parsed_data && (
           <div className="space-y-4">
             <div className="space-y-3">
+              {/* Transaction Type Toggle */}
+              <div>
+                <Label>Transaction Type</Label>
+                <div className="grid grid-cols-2 gap-1 p-1 bg-muted rounded-lg mt-2">
+                  <button
+                    type="button"
+                    onClick={() => handleTypeChange("expense")}
+                    className={cn(
+                      "flex items-center justify-center py-2 px-3 rounded-md text-sm font-medium transition-colors",
+                      formData.transaction_type === "expense"
+                        ? "bg-red-500 text-white shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <Minus className="w-3 h-3 mr-1" />
+                    Expense
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleTypeChange("income")}
+                    className={cn(
+                      "flex items-center justify-center py-2 px-3 rounded-md text-sm font-medium transition-colors",
+                      formData.transaction_type === "income"
+                        ? "bg-green-500 text-white shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <Plus className="w-3 h-3 mr-1" />
+                    Income
+                  </button>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label htmlFor="amount" className="mb-2">

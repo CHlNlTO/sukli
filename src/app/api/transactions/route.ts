@@ -1,3 +1,4 @@
+// src/app/api/transactions/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/shared/lib/supabase/server";
@@ -6,6 +7,7 @@ import { z } from "zod";
 const createTransactionSchema = z.object({
   amount: z.number().positive(),
   currency: z.string().length(3),
+  transaction_type: z.enum(["income", "expense"]),
   merchant_name: z.string().optional(),
   category: z.string().optional(),
   transaction_date: z.string(),
@@ -78,6 +80,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "20");
+    const type = searchParams.get("type") as "income" | "expense" | null;
     const offset = (page - 1) * limit;
 
     const supabase = await createClient();
@@ -96,13 +99,22 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get transactions
-    const { data: transactions, error } = await supabase
+    // Build query
+    let query = supabase
       .from("transactions")
       .select("*")
       .eq("user_id", userProfile.id)
-      .order("transaction_date", { ascending: false })
-      .range(offset, offset + limit - 1);
+      .order("transaction_date", { ascending: false });
+
+    // Add type filter if specified
+    if (type && ["income", "expense"].includes(type)) {
+      query = query.eq("transaction_type", type);
+    }
+
+    // Add pagination
+    query = query.range(offset, offset + limit - 1);
+
+    const { data: transactions, error } = await query;
 
     if (error) {
       throw error;

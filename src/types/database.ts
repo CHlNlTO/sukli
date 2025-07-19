@@ -1,3 +1,4 @@
+// src/types/database.ts
 export interface UserProfile {
   id: string;
   clerk_user_id: string;
@@ -14,11 +15,14 @@ export interface UserProfile {
   updated_at: string;
 }
 
+export type TransactionType = "income" | "expense";
+
 export interface Transaction {
   id: string;
   user_id: string;
   amount: number;
   currency: string;
+  transaction_type: TransactionType;
   merchant_name?: string;
   category?: string;
   transaction_date: string;
@@ -46,6 +50,7 @@ export interface UserPrompt {
 export interface ParsedReceiptData {
   amount: number;
   currency: string;
+  transaction_type?: TransactionType;
   merchant_name?: string;
   category?: string;
   transaction_date: string;
