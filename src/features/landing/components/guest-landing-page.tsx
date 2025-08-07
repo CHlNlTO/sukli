@@ -20,7 +20,7 @@ export function GuestLandingPage() {
   const [showSignUpModal, setShowSignUpModal] = useState(false);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [pendingTransactions, setPendingTransactions] = useState<any[]>([]);
+  const [_pendingTransactions, setPendingTransactions] = useState<any[]>([]);
 
   const { uploadedImages, isUploading, uploadFiles, removeImage } =
     useFileUpload();
